@@ -1,17 +1,42 @@
 package edu.uw.ischool.phariha.awty
 
-import android.content.BroadcastReceiver
-import android.content.Context
+import android.app.IntentService
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.telephony.SmsManager
 import android.util.Log
-import android.widget.Toast
+import androidx.core.content.ContextCompat
+import android.Manifest
 
-class MessageService : BroadcastReceiver() {
-    override fun onReceive(context: Context?, intent: Intent?) {
+class MessageService : IntentService("MessageService") {
 
-        Log.i("test", "toast is being made")
+    override fun onHandleIntent(intent: Intent?) {
+        Log.i("MessageService", "onHandleIntent called")
+
         val message = intent?.getStringExtra("message") ?: ""
         val phoneNumber = intent?.getStringExtra("phone") ?: ""
-        Toast.makeText(context, "($phoneNumber): $message", Toast.LENGTH_SHORT).show()
+
+        Log.i("MessageService", "Received message: $message to phone number: $phoneNumber")
+
+        // You can continue with the rest of your logic here
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.SEND_SMS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            sendSMS(phoneNumber, message)
+        } else {
+            Log.e("MessageService", "SMS permission not granted")
+        }
+    }
+
+    private fun sendSMS(phoneNumber: String, message: String) {
+        try {
+            val smsManager = SmsManager.getDefault()
+            smsManager.sendTextMessage(phoneNumber, null, message, null, null)
+            Log.i("MessageService", "SMS sent to $phoneNumber: $message")
+        } catch (e: Exception) {
+            Log.e("MessageService", "Failed to send SMS", e)
+        }
     }
 }
